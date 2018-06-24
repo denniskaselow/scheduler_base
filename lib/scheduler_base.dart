@@ -3,11 +3,9 @@ library scheduler.base;
 import 'dart:math';
 
 import 'package:intl/intl.dart';
-import 'package:dson/dson.dart';
 
 DateTime _today = new DateTime.now();
 
-@serializable
 class TimeSlot extends Object with HeightMixin {
   String name, description;
   DateTime start, end;
@@ -29,7 +27,6 @@ class TimeSlot extends Object with HeightMixin {
   }
 }
 
-@serializable
 class RbtvTimeSlot extends TimeSlot {
   bool live;
   bool premiere;
