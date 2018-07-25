@@ -4,10 +4,10 @@ version: 0.0.1
 publish_to: none
 
 environment:
-  sdk: '>=2.0.0-dev <2.0.0'
+  sdk: '>=2.0.0-dev <3.0.0'
 
 dependencies:
-  intl: ^0.14.0
+  intl: ^0.15.0
 
 dev_dependencies:
   test: ^1.0.0
