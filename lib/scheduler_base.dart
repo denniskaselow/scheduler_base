@@ -4,7 +4,7 @@ import 'dart:math';
 
 import 'package:intl/intl.dart';
 
-DateTime _today = new DateTime.now();
+DateTime _today = DateTime.now();
 
 class TimeSlot extends Object with HeightMixin {
   String name, description;
@@ -15,7 +15,7 @@ class TimeSlot extends Object with HeightMixin {
   String getStartLabel() => timeFormat.format(start);
   String getDurationLabel() => '${getDuration().inMinutes} min';
   double getProgress() {
-    var timepassed = new DateTime.now().difference(start);
+    var timepassed = DateTime.now().difference(start);
     if (timepassed.inMilliseconds < 0) {
       return 0.0;
     }
@@ -38,6 +38,28 @@ class RbtvTimeSlot extends TimeSlot {
       this.live,
       this.premiere])
       : super(name, start, end, description);
+
+  RbtvTimeSlot.decode(Map<String, dynamic> encoded) {
+    name = encoded['name'];
+    description = encoded['description'];
+    start = DateTime.parse(encoded['start']);
+    end = DateTime.parse(encoded['end']);
+    height = encoded['height'];
+    live = encoded['live'];
+    premiere = encoded['premiere'];
+  }
+
+  Object toJson() => {
+        'name': name,
+        'description': description,
+        'start': start.toIso8601String(),
+        'end': end.toIso8601String(),
+        'height': height,
+        'live': live,
+        'premiere': premiere,
+      };
+
+  String toString() => toJson().toString();
 }
 
 class EmptyTimeSlot extends TimeSlot {
@@ -67,23 +89,23 @@ class SchedulerService {
   int startMinute = 0;
 
   List<Day> getDays() {
-    var today = new DateTime.now();
+    var today = DateTime.now();
     var days = [
-      new Day(today.subtract(new Duration(days: 1)),
-          getTimeSlots(today.subtract(new Duration(days: 1)))),
-      new Day(today, getTimeSlots(today)),
-      new Day(today.add(new Duration(days: 1)),
-          getTimeSlots(today.add(new Duration(days: 1))))
+      Day(today.subtract(Duration(days: 1)),
+          getTimeSlots(today.subtract(Duration(days: 1)))),
+      Day(today, getTimeSlots(today)),
+      Day(today.add(Duration(days: 1)),
+          getTimeSlots(today.add(Duration(days: 1))))
     ];
     return days;
   }
 
   List<TimeSlot> getTimeSlots(DateTime date) {
-    var random = new Random();
-    var start = new DateTime(date.year, date.month, date.day,
-        random.nextInt(24), random.nextInt(60));
-    var end = start.add(new Duration(minutes: 5 + random.nextInt(180)));
-    var timeSlot = new TimeSlot('Testing', start, end);
+    var random = Random();
+    var start = DateTime(date.year, date.month, date.day, random.nextInt(24),
+        random.nextInt(60));
+    var end = start.add(Duration(minutes: 5 + random.nextInt(180)));
+    var timeSlot = TimeSlot('Testing', start, end);
     var timeSlots = [timeSlot];
     fillTimeSlots(timeSlots, date);
     return timeSlots;
@@ -91,30 +113,30 @@ class SchedulerService {
 
   void fillTimeSlots(List<TimeSlot> timeSlots, DateTime date) {
     if (timeSlots.length == 0) {
-      var nextDay = date.add(new Duration(days: 1));
+      var nextDay = date.add(Duration(days: 1));
       timeSlots.add(getEmptyTimeSlot(
-          new DateTime(date.year, date.month, date.day, startHour, startMinute),
-          new DateTime(nextDay.year, nextDay.month, nextDay.day, startHour,
+          DateTime(date.year, date.month, date.day, startHour, startMinute),
+          DateTime(nextDay.year, nextDay.month, nextDay.day, startHour,
               startMinute)));
       return;
     }
 
     var current = timeSlots.first;
     var emptySlot = getEmptyTimeSlot(
-        new DateTime(current.start.year, current.start.month, current.start.day,
+        DateTime(current.start.year, current.start.month, current.start.day,
             startHour, startMinute),
-        new DateTime(current.start.year, current.start.month, current.start.day,
+        DateTime(current.start.year, current.start.month, current.start.day,
             current.start.hour, current.start.minute));
     if (emptySlot.getDuration().inMinutes > 0) {
       timeSlots.insert(0, emptySlot);
     }
 
     current = timeSlots.last;
-    var tommorow = date.add(new Duration(days: 1));
+    var tommorow = date.add(Duration(days: 1));
     emptySlot = getEmptyTimeSlot(
-        new DateTime(current.end.year, current.end.month, current.end.day,
+        DateTime(current.end.year, current.end.month, current.end.day,
             current.end.hour, current.end.minute),
-        new DateTime(tommorow.year, tommorow.month, tommorow.day, startHour,
+        DateTime(tommorow.year, tommorow.month, tommorow.day, startHour,
             startMinute));
     if (emptySlot.getDuration().inMinutes > 0) {
       timeSlots.add(emptySlot);
@@ -122,7 +144,7 @@ class SchedulerService {
   }
 
   TimeSlot getEmptyTimeSlot(DateTime start, DateTime end) {
-    return new EmptyTimeSlot(start, end);
+    return EmptyTimeSlot(start, end);
   }
 
   void optimizeHeights(List<Day> days, int minHeight) {
@@ -161,6 +183,9 @@ class SchedulerService {
           var jointDuration = jointEndTime.difference(jointStartTime);
           var share =
               jointDuration.inMinutes / shortSlot.getDuration().inMinutes;
+          // sometimes the data makes no sense (2 shows starting at the same
+          // time, which will result in one show being 0 minutes)
+          share = share.isNaN ? 1.0 : share;
           timeSlot.height += (missingHeight * share).round();
         }
       }
@@ -203,9 +228,9 @@ class SchedulerService {
     var baseDate = _today;
     if (timeSlot.end.hour >= 0 && timeSlot.end.hour < startHour ||
         timeSlot.end.hour == startHour && timeSlot.end.minute <= startMinute) {
-      baseDate = baseDate.add(new Duration(days: 1));
+      baseDate = baseDate.add(Duration(days: 1));
     }
-    return new DateTime(baseDate.year, baseDate.month, baseDate.day,
+    return DateTime(baseDate.year, baseDate.month, baseDate.day,
         timeSlot.end.hour, timeSlot.end.minute);
   }
 
@@ -213,10 +238,9 @@ class SchedulerService {
     var baseDate = _today;
     if (hour >= 0 && hour < startHour ||
         hour == startHour && minute < startMinute) {
-      baseDate = baseDate.add(new Duration(days: 1));
+      baseDate = baseDate.add(Duration(days: 1));
     }
-    return new DateTime(
-        baseDate.year, baseDate.month, baseDate.day, hour, minute);
+    return DateTime(baseDate.year, baseDate.month, baseDate.day, hour, minute);
   }
 
   DateTime _getStartTime(TimeSlot timeSlot) {
@@ -224,9 +248,9 @@ class SchedulerService {
     if (timeSlot.start.hour >= 0 && timeSlot.start.hour < startHour ||
         timeSlot.start.hour == startHour &&
             timeSlot.start.minute < startMinute) {
-      baseDate = baseDate.add(new Duration(days: 1));
+      baseDate = baseDate.add(Duration(days: 1));
     }
-    return new DateTime(baseDate.year, baseDate.month, baseDate.day,
+    return DateTime(baseDate.year, baseDate.month, baseDate.day,
         timeSlot.start.hour, timeSlot.start.minute);
   }
 }
@@ -235,8 +259,8 @@ class HeightMixin {
   int height;
 }
 
-final DateFormat dateFormat = new DateFormat.yMEd();
-final DateFormat timeFormat = new DateFormat.Hm();
-final DateFormat dayNameFormat = new DateFormat.E("en_US");
-final DateFormat dateIdFormat = new DateFormat('yyyyMMdd');
-final DateFormat timeIdFormat = new DateFormat('HHmm');
+final DateFormat dateFormat = DateFormat.yMEd();
+final DateFormat timeFormat = DateFormat.Hm();
+final DateFormat dayNameFormat = DateFormat.E("en_US");
+final DateFormat dateIdFormat = DateFormat('yyyyMMdd');
+final DateFormat timeIdFormat = DateFormat('HHmm');

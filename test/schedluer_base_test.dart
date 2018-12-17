@@ -8,26 +8,26 @@ void main() {
     TimeSlot timeSlot;
 
     setUp(() {
-      timeSlot = new TimeSlot('testing', new DateTime.utc(2016, 1, 3, 13, 37),
-          new DateTime.utc(2016, 1, 3, 14, 00));
+      timeSlot = TimeSlot('testing', DateTime.utc(2016, 1, 3, 13, 37),
+          DateTime.utc(2016, 1, 3, 14, 00));
     });
 
     test('returns corret duration', () {
-      expect(timeSlot.getDuration(), equals(new Duration(minutes: 23)));
+      expect(timeSlot.getDuration(), equals(Duration(minutes: 23)));
     });
   });
   group('SchedulerService', () {
     SchedulerService service;
 
     setUp(() {
-      service = new SchedulerService();
+      service = SchedulerService();
     });
 
     test('returns last, current and next day', () {
       var days = service.getDays();
-      var today = new DateTime.now();
-      var yesterday = today.subtract(new Duration(days: 1));
-      var tomorrow = today.add(new Duration(days: 1));
+      var today = DateTime.now();
+      var yesterday = today.subtract(Duration(days: 1));
+      var tomorrow = today.add(Duration(days: 1));
 
       expect(days.length, equals(3));
       expect(days[0].date.year, equals(yesterday.year));
@@ -44,10 +44,10 @@ void main() {
     });
 
     test('fills missing TimeSlots in Day', () {
-      var timeSlots = service.getTimeSlots(new DateTime(2016, 01, 24));
+      var timeSlots = service.getTimeSlots(DateTime(2016, 01, 24));
 
-      expect(timeSlots.first.start, equals(new DateTime(2016, 01, 24)));
-      expect(timeSlots.last.end, equals(new DateTime(2016, 01, 25)));
+      expect(timeSlots.first.start, equals(DateTime(2016, 01, 24)));
+      expect(timeSlots.last.end, equals(DateTime(2016, 01, 25)));
 
       for (int i = 1; i < timeSlots.length; i++) {
         expect((timeSlots[i - 1].end), equals(timeSlots[i].start));
@@ -55,17 +55,13 @@ void main() {
     });
 
     test('reduces height of big TimeSlots in Day', () {
-      var day1 = new Day(new DateTime(2016, 01, 25), [
-        new TimeSlot(
-            '', new DateTime(2016, 01, 24), new DateTime(2016, 01, 24, 10)),
-        new TimeSlot(
-            '', new DateTime(2016, 01, 24, 10), new DateTime(2016, 01, 25))
+      var day1 = Day(DateTime(2016, 01, 25), [
+        TimeSlot('', DateTime(2016, 01, 24), DateTime(2016, 01, 24, 10)),
+        TimeSlot('', DateTime(2016, 01, 24, 10), DateTime(2016, 01, 25))
       ]);
-      var day2 = new Day(new DateTime(2016, 01, 25), [
-        new TimeSlot(
-            '', new DateTime(2016, 01, 25), new DateTime(2016, 01, 25, 14)),
-        new TimeSlot(
-            '', new DateTime(2016, 01, 25, 14), new DateTime(2016, 01, 26))
+      var day2 = Day(DateTime(2016, 01, 25), [
+        TimeSlot('', DateTime(2016, 01, 25), DateTime(2016, 01, 25, 14)),
+        TimeSlot('', DateTime(2016, 01, 25, 14), DateTime(2016, 01, 26))
       ]);
 
       service.optimizeHeights([day1, day2], 100);
@@ -77,17 +73,13 @@ void main() {
     });
 
     test('increases height of short TimeSlots in Day', () {
-      var day1 = new Day(new DateTime(2016, 01, 24), [
-        new TimeSlot(
-            '', new DateTime(2016, 01, 24), new DateTime(2016, 01, 24, 1)),
-        new TimeSlot(
-            '', new DateTime(2016, 01, 24, 1), new DateTime(2016, 01, 25))
+      var day1 = Day(DateTime(2016, 01, 24), [
+        TimeSlot('', DateTime(2016, 01, 24), DateTime(2016, 01, 24, 1)),
+        TimeSlot('', DateTime(2016, 01, 24, 1), DateTime(2016, 01, 25))
       ]);
-      var day2 = new Day(new DateTime(2016, 01, 25), [
-        new TimeSlot(
-            '', new DateTime(2016, 01, 25), new DateTime(2016, 01, 25, 23)),
-        new TimeSlot(
-            '', new DateTime(2016, 01, 25, 23), new DateTime(2016, 01, 26))
+      var day2 = Day(DateTime(2016, 01, 25), [
+        TimeSlot('', DateTime(2016, 01, 25), DateTime(2016, 01, 25, 23)),
+        TimeSlot('', DateTime(2016, 01, 25, 23), DateTime(2016, 01, 26))
       ]);
 
       service.optimizeHeights([day1, day2], 100);
@@ -99,23 +91,17 @@ void main() {
     });
 
     test('increases height of short TimeSlots in Day only once', () {
-      var day1 = new Day(new DateTime(2016, 01, 24), [
-        new TimeSlot(
-            '', new DateTime(2016, 01, 24), new DateTime(2016, 01, 24, 1)),
-        new TimeSlot(
-            '', new DateTime(2016, 01, 24, 1), new DateTime(2016, 01, 25))
+      var day1 = Day(DateTime(2016, 01, 24), [
+        TimeSlot('', DateTime(2016, 01, 24), DateTime(2016, 01, 24, 1)),
+        TimeSlot('', DateTime(2016, 01, 24, 1), DateTime(2016, 01, 25))
       ]);
-      var day2 = new Day(new DateTime(2016, 01, 25), [
-        new TimeSlot(
-            '', new DateTime(2016, 01, 25), new DateTime(2016, 01, 25, 1)),
-        new TimeSlot(
-            '', new DateTime(2016, 01, 25, 1), new DateTime(2016, 01, 26))
+      var day2 = Day(DateTime(2016, 01, 25), [
+        TimeSlot('', DateTime(2016, 01, 25), DateTime(2016, 01, 25, 1)),
+        TimeSlot('', DateTime(2016, 01, 25, 1), DateTime(2016, 01, 26))
       ]);
-      var day3 = new Day(new DateTime(2016, 01, 26), [
-        new TimeSlot(
-            '', new DateTime(2016, 01, 26), new DateTime(2016, 01, 26, 1)),
-        new TimeSlot(
-            '', new DateTime(2016, 01, 26, 1), new DateTime(2016, 01, 27))
+      var day3 = Day(DateTime(2016, 01, 26), [
+        TimeSlot('', DateTime(2016, 01, 26), DateTime(2016, 01, 26, 1)),
+        TimeSlot('', DateTime(2016, 01, 26, 1), DateTime(2016, 01, 27))
       ]);
 
       service.optimizeHeights([day1, day2, day3], 100);
